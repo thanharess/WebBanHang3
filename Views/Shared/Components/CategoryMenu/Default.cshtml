@@ -1,0 +1,31 @@
+@model List<Category>
+
+@if (Model.Count > 0)
+{
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="categoryDropdown" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">Danh mục</a>
+        <div class="dropdown-menu category-mega" aria-labelledby="categoryDropdown">
+            <div class="category-mega-header">
+                <a asp-controller="Products" asp-action="Index" class="category-mega-all">Tất cả sản phẩm →</a>
+            </div>
+            <div class="category-mega-grid">
+                @foreach (var category in Model)
+                {
+                    var img = string.IsNullOrWhiteSpace(category.ImageUrl)
+                        ? "/images/product-placeholder.svg"
+                        : category.ImageUrl;
+                    <a class="category-mega-item"
+                       asp-controller="Products"
+                       asp-action="Index"
+                       asp-route-categoryId="@category.Id">
+                        <span class="category-mega-img-wrap">
+                            <img src="@img" alt="@category.Name" />
+                        </span>
+                        <span class="category-mega-name">@category.Name</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </li>
+}

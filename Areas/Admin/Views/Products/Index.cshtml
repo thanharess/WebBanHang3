@@ -1,0 +1,158 @@
+@model List<Product>
+
+@{
+    ViewData["Title"] = "Quản lý sản phẩm";
+    var keyword = ViewData["Keyword"] as string;
+    var categoryId = ViewData["CategoryId"] as int?;
+    var priceMin = ViewData["PriceMin"] as decimal?;
+    var priceMax = ViewData["PriceMax"] as decimal?;
+    var stockMin = ViewData["StockMin"] as int?;
+    var stockMax = ViewData["StockMax"] as int?;
+    var sort = ViewData["Sort"] as string ?? "id";
+    var dir = ViewData["Dir"] as string ?? "asc";
+    var page = (int)(ViewData["Page"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+    var totalItems = (int)(ViewData["TotalItems"] ?? 0);
+    var categories = ViewData["Categories"] as IEnumerable<Category> ?? Enumerable.Empty<Category>();
+    string NextDir(string col) => (sort == col && dir == "asc") ? "desc" : "asc";
+    string Icon(string col) => sort == col ? (dir == "asc" ? "↑" : "↓") : "↕";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="fw-bold mb-0">📦 Quản lý sản phẩm</h2>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-success" asp-action="ExportExcel" asp-route-q="@keyword" asp-route-categoryId="@categoryId" asp-route-priceMin="@priceMin" asp-route-priceMax="@priceMax" asp-route-stockMin="@stockMin" asp-route-stockMax="@stockMax" asp-route-sort="@sort" asp-route-dir="@dir">⬇ Excel</a>
+        <a class="btn btn-primary" asp-action="Create">+ Thêm sản phẩm</a>
+    </div>
+</div>
+<form asp-action="Index" method="get" class="card shadow-sm mb-3">
+    <div class="card-body row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small mb-1">Tìm theo tên</label>
+            <input type="text" name="q" value="@keyword" class="form-control" placeholder="Tên sản phẩm..." />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small mb-1">Danh mục</label>
+            <select name="categoryId" class="form-select">
+                <option value="">— Tất cả —</option>
+                @foreach (var c in categories)
+                {
+                    if (categoryId == c.Id)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-1">Giá từ</label>
+            <input name="priceMin" value="@priceMin" type="number" min="0" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-1">Giá đến</label>
+            <input name="priceMax" value="@priceMax" type="number" min="0" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-1">Tồn kho từ</label>
+            <input name="stockMin" value="@stockMin" type="number" min="0" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small mb-1">Tồn kho đến</label>
+            <input name="stockMax" value="@stockMax" type="number" min="0" class="form-control" />
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4">Lọc</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Xoá lọc</a>
+        </div>
+    </div>
+</form>
+
+<p class="text-muted">Tổng cộng <strong>@totalItems</strong> sản phẩm.</p>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">Không có sản phẩm nào.</div>
+}
+else
+{
+    <div class="table-responsive card shadow-sm">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th style="width:70px">Ảnh</th>
+                    <th>
+                        <a class="text-decoration-none text-dark" asp-action="Index"
+                           asp-route-q="@keyword" asp-route-categoryId="@categoryId" asp-route-priceMin="@priceMin" asp-route-priceMax="@priceMax" asp-route-stockMin="@stockMin" asp-route-stockMax="@stockMax" asp-route-sort="name" asp-route-dir="@NextDir("name")">
+                            Tên <span class="sort-indicator">@Icon("name")</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="text-decoration-none text-dark" asp-action="Index"
+                           asp-route-q="@keyword" asp-route-categoryId="@categoryId" asp-route-priceMin="@priceMin" asp-route-priceMax="@priceMax" asp-route-stockMin="@stockMin" asp-route-stockMax="@stockMax" asp-route-sort="category" asp-route-dir="@NextDir("category")">
+                            Danh mục <span class="sort-indicator">@Icon("category")</span>
+                        </a>
+                    </th>
+                    <th class="text-end">
+                        <a class="text-decoration-none text-dark" asp-action="Index"
+                           asp-route-q="@keyword" asp-route-categoryId="@categoryId" asp-route-priceMin="@priceMin" asp-route-priceMax="@priceMax" asp-route-stockMin="@stockMin" asp-route-stockMax="@stockMax" asp-route-sort="price" asp-route-dir="@NextDir("price")">
+                            Giá bán <span class="sort-indicator">@Icon("price")</span>
+                        </a>
+                    </th>
+                    <th class="text-end">
+                        <a class="text-decoration-none text-dark" asp-action="Index"
+                           asp-route-q="@keyword" asp-route-categoryId="@categoryId" asp-route-priceMin="@priceMin" asp-route-priceMax="@priceMax" asp-route-stockMin="@stockMin" asp-route-stockMax="@stockMax" asp-route-sort="discount" asp-route-dir="@NextDir("discount")">
+                            Giá KM <span class="sort-indicator">@Icon("discount")</span>
+                        </a>
+                    </th>
+                    <th class="text-end">
+                        <a class="text-decoration-none text-dark" asp-action="Index"
+                           asp-route-q="@keyword" asp-route-categoryId="@categoryId" asp-route-priceMin="@priceMin" asp-route-priceMax="@priceMax" asp-route-stockMin="@stockMin" asp-route-stockMax="@stockMax" asp-route-sort="stock" asp-route-dir="@NextDir("stock")">
+                            Tồn kho <span class="sort-indicator">@Icon("stock")</span>
+                        </a>
+                    </th>
+                    <th style="width:150px"></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <img src="@item.ImageUrl" alt="" class="rounded border"
+                             style="width:56px;height:42px;object-fit:cover;" />
+                    </td>
+                    <td>@item.Name</td>
+                    <td>@item.Category?.Name</td>
+                    <td class="text-end">@item.Price.ToString("N0") đ</td>
+                    <td class="text-end">@(item.DiscountPrice.HasValue ? item.DiscountPrice.Value.ToString("N0") + " đ" : "—")</td>
+                    <td class="text-end @(item.StockQuantity == 0 ? "text-danger fw-bold" : "")">@item.StockQuantity</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@item.Id">Sửa</a>
+                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@item.Id">Xoá</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    @if (totalPages > 1)
+    {
+        <nav class="mt-3">
+            <ul class="pagination">
+                @for (var i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : null)">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-q="@keyword" asp-route-categoryId="@categoryId" asp-route-priceMin="@priceMin" asp-route-priceMax="@priceMax" asp-route-stockMin="@stockMin" asp-route-stockMax="@stockMax"
+                           asp-route-sort="@sort" asp-route-dir="@dir" asp-route-page="@i">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}

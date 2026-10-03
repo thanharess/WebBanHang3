@@ -1,0 +1,56 @@
+@model Product
+@{
+    ViewData["Title"] = Model.Name;
+    var effectivePrice = Model.DiscountPrice ?? Model.Price;
+    var hasDiscount = Model.DiscountPrice.HasValue && Model.DiscountPrice.Value < Model.Price && Model.Price > 0;
+    var inStock = Model.StockQuantity > 0;
+    var categoryName = Model.Category?.Name ?? "Sản phẩm Golf";
+    var galleryImages = Model.Images.Where(i => !i.IsContentImage).OrderBy(i => i.SortOrder).Select(i => i.Url).ToList();
+    if (galleryImages.Count == 0 && !string.IsNullOrWhiteSpace(Model.ImageUrl)) galleryImages.Add(Model.ImageUrl);
+    var mainImage = galleryImages.FirstOrDefault() ?? "/images/product-placeholder.svg";
+    var contentImages = Model.Images.Where(i => i.IsContentImage).OrderBy(i => i.SortOrder).Select(i => i.Url).ToList();
+    var specImage = categoryName switch { "Gậy Golf" => "/images/spec-club.svg", "Bóng Golf" => "/images/spec-ball.svg", "Túi Golf" => "/images/spec-bag.svg", "Găng Tay Golf" or "Giày Golf" or "Quần Áo Golf" => "/images/spec-apparel.svg", _ => "/images/spec-accessory.svg" };
+    var specs = categoryName switch
+    {
+        "Gậy Golf" => new[] { ("Loại gậy", "Driver / Iron / Putter mẫu"), ("Chất liệu", "Carbon & thép không gỉ"), ("Độ cứng shaft", "Regular / Stiff"), ("Tay thuận", "Tay phải / Tay trái") },
+        "Bóng Golf" => new[] { ("Cấu trúc", "3 lớp (mẫu tham khảo)"), ("Độ nén", "80 – 90"), ("Độ xoáy", "Trung bình – cao"), ("Quy cách", "Hộp 12 bóng") },
+        "Túi Golf" => new[] { ("Số ngăn", "5 – 14 ngăn (mẫu)"), ("Chất liệu", "Vải polyester chống thấm"), ("Trọng lượng", "Khoảng 2.5 – 3.5 kg"), ("Tính năng", "Ngăn phụ kiện & quai đeo") },
+        "Găng Tay Golf" or "Giày Golf" or "Quần Áo Golf" => new[] { ("Chất liệu", "Co giãn, thoáng khí"), ("Kích cỡ", "S – M – L – XL"), ("Phù hợp", "Luyện tập & thi đấu"), ("Bảo quản", "Giặt / vệ sinh theo hướng dẫn") },
+        _ => new[] { ("Chất liệu", "Bền nhẹ, dùng ngoài sân"), ("Kích thước", "Theo phiên bản sản phẩm"), ("Công năng", "Hỗ trợ vòng golf tiện lợi"), ("Bảo hành", "Theo chính sách cửa hàng") }
+    };
+}
+<div class="container product-detail-page" id="product-@Model.Id">
+    <nav class="product-breadcrumb mb-3" aria-label="breadcrumb">
+        <a class="btn btn-sm btn-outline-secondary breadcrumb-btn" asp-controller="Home" asp-action="Index">Trang chủ</a>
+        <span class="breadcrumb-sep">/</span>
+        <a class="btn btn-sm btn-outline-secondary breadcrumb-btn" asp-action="Index" asp-route-categoryId="@Model.CategoryId">@categoryName</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="btn btn-sm btn-dark breadcrumb-btn disabled">@Model.Name</span>
+    </nav>
+    <div class="row g-4 g-lg-5">
+        <div class="col-lg-7"><div class="product-detail-gallery"><div class="product-thumbnails">@foreach (var image in galleryImages) { <button type="button" class="product-thumbnail-button" data-product-image="@image"><img src="@image" alt="@Model.Name" /></button> }<button type="button" class="product-thumbnail-button" data-product-image="@specImage"><img src="@specImage" alt="@categoryName - minh họa thông số" /></button></div><img src="@mainImage" class="product-detail-main-image" id="productMainImage" alt="@Model.Name" /></div></div>
+        <div class="col-lg-5">
+            <div class="product-category-label">CH&amp;T GOLF / @categoryName.ToUpperInvariant()</div>
+            <h1 class="product-detail-title mt-2 mb-3">@Model.Name</h1>
+            <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                <span class="badge product-sample-badge">Mẫu tham khảo</span>
+                <span class="product-rating small"><span class="product-stars">★</span> 4.9 / 5 · 18 đánh giá</span>
+            </div>
+            <h2 class="price @(hasDiscount ? "sale" : "") product-price mb-3">@effectivePrice.ToString("N0") đ @if (hasDiscount) { <span class="price-old">@Model.Price.ToString("N0") đ</span> }</h2><p class="mb-3 text-secondary">@Model.Description</p>
+            <div class="detail-points"><div><strong>Chính hãng</strong>Kiểm tra trước khi giao</div><div><strong>Giao nhanh</strong>Toàn quốc tiện lợi</div><div><strong>Đổi trả</strong>Hỗ trợ trong 30 ngày</div></div><p class="text-muted mb-3">📦 Tồn kho: <strong>@Model.StockQuantity sản phẩm</strong></p>
+            @if (inStock) { <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex flex-wrap gap-2 align-items-end" data-ajax-add="true">@Html.AntiForgeryToken()<input type="hidden" name="productId" value="@Model.Id" /><input type="hidden" name="returnUrl" value="@Url.Action("Details", "Products", new { id = Model.Id })" /><div><label for="quantity" class="form-label small mb-1">Số lượng</label><input id="quantity" name="quantity" type="number" value="1" min="1" max="@Model.StockQuantity" class="form-control form-control-lg" style="width:90px" /></div><button type="submit" class="btn btn-primary btn-lg flex-grow-1">Thêm vào giỏ hàng <span>+</span></button></form> } else { <div class="alert alert-warning mb-0">Sản phẩm tạm hết hàng.</div> }
+        </div>
+    </div>
+    <section class="spec-section"><div class="section-heading"><div><span>PRODUCT SPECIFICATION</span><h2>Thông số kỹ thuật mẫu</h2></div><span class="text-muted">Dễ thay đổi khi cập nhật sản phẩm</span></div><div class="row align-items-center g-4"><div class="col-md-6"><img class="spec-visual" src="@specImage" alt="Bảng thông số mẫu cho @categoryName" /></div><div class="col-md-6"><div class="technical-table">@foreach (var spec in specs) { <div><span>@spec.Item1</span><strong>@spec.Item2</strong></div> }</div></div></div></section>
+    <section class="product-content-note"><span>THÔNG TIN THÊM</span><h2>Ghi chú thông tin sản phẩm</h2>@if (string.IsNullOrWhiteSpace(Model.ContentNote) && contentImages.Count == 0) { <p class="text-muted mb-0">Bạn có thể thêm hướng dẫn sử dụng, câu chuyện sản phẩm hoặc nội dung marketing trong khu quản trị.</p> } else { <div class="product-content-note-body">@Html.Raw(System.Net.WebUtility.HtmlEncode(Model.ContentNote).Replace("\n", "<br />"))</div>@if (contentImages.Count > 0) { <div class="row g-3 mt-2">@foreach (var image in contentImages) { <div class="col-6 col-md-4"><img src="@image" alt="Ảnh ghi chú @Model.Name" class="img-fluid rounded border" loading="lazy" /></div> }</div> } }</section>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[data-product-image]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                document.getElementById('productMainImage').src = button.dataset.productImage;
+            });
+        });
+    </script>
+}

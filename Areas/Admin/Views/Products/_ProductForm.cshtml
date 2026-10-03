@@ -1,0 +1,153 @@
+@model ProductFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row">
+    <div class="col-md-8 mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+</div>
+
+@{
+    var galleryImages = Model.ExistingImages.Where(i => !i.IsContentImage).OrderBy(i => i.SortOrder).ToList();
+    if (galleryImages.Count == 0 && !string.IsNullOrWhiteSpace(Model.CurrentImageUrl))
+    {
+        galleryImages.Add(new ProductImage { Url = Model.CurrentImageUrl });
+    }
+}
+<script>
+    document.querySelectorAll('.product-slot-input').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var file = input.files && input.files[0];
+            var preview = input.closest('.product-image-slot').querySelector('.product-image-preview-wrap');
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                preview.innerHTML = '<img class="product-image-preview" alt="Ảnh xem trước" src="' + event.target.result + '">';
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+</script>
+<div class="card border mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+            <label class="form-label fw-bold mb-0">Ảnh sản phẩm — 9 ô quản lý</label>
+            <span class="badge bg-light text-dark border">@galleryImages.Count/9 ảnh</span>
+        </div>
+        <div class="form-text mb-3">Mỗi ô là một ảnh riêng. Ảnh mới sẽ được xem trước ngay khi chọn, tối đa 2 MB/ảnh.</div>
+        <div class="row g-2 product-image-slots">
+            @for (var slot = 0; slot < 9; slot++)
+            {
+                var existing = slot < galleryImages.Count ? galleryImages[slot] : null;
+                <div class="col-6 col-sm-4 col-lg-3">
+                    <div class="product-image-slot @(existing == null ? "is-empty" : "")">
+                        <div class="product-image-preview-wrap">
+                            @if (existing != null)
+                            {
+                                <img class="product-image-preview" src="@existing.Url" alt="Ảnh sản phẩm @(slot + 1)" />
+                                @if (existing.Id > 0)
+                                {
+                                    <label class="product-image-delete"><input type="checkbox" name="DeleteImageIds" value="@existing.Id" /> Xóa</label>
+                                }
+                            }
+                            else
+                            {
+                                <span class="product-image-placeholder">Ảnh @(slot + 1)</span>
+                            }
+                        </div>
+                        <label class="btn btn-sm btn-outline-secondary w-100 product-image-select">
+                            Chọn ảnh
+                            <input type="file" name="GalleryFiles" accept="image/*" class="product-slot-input" hidden />
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+        <span asp-validation-for="GalleryFiles" class="text-danger"></span>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label asp-for="CategoryId" class="form-label"></label>
+        <select asp-for="CategoryId" class="form-select"
+                asp-items="@(new SelectList(Model.Categories, nameof(Category.Id), nameof(Category.Name)))">
+            <option value="">-- Chọn danh mục --</option>
+        </select>
+        <span asp-validation-for="CategoryId" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="card border mb-3">
+    <div class="card-body">
+        <label asp-for="ContentImageFiles" class="form-label fw-bold"></label>
+        <input asp-for="ContentImageFiles" type="file" accept="image/*" multiple class="form-control" />
+        <div class="form-text">Ảnh sẽ hiển thị bên dưới phần ghi chú. Mỗi lần tải tối đa 30 ảnh.</div>
+        <span asp-validation-for="ContentImageFiles" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label asp-for="Price" class="form-label"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="DiscountPrice" class="form-label"></label>
+        <input asp-for="DiscountPrice" class="form-control" />
+        <span asp-validation-for="DiscountPrice" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="StockQuantity" class="form-label"></label>
+        <input asp-for="StockQuantity" class="form-control" />
+        <span asp-validation-for="StockQuantity" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+    <span asp-validation-for="Description" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="ContentNote" class="form-label"></label>
+    <textarea asp-for="ContentNote" class="form-control" rows="6" placeholder="Ví dụ: hướng dẫn sử dụng, công nghệ nổi bật, lưu ý bảo quản..."></textarea>
+    <div class="form-text">Nội dung này sẽ hiển thị dưới phần thông số kỹ thuật ở trang chi tiết sản phẩm.</div>
+    <span asp-validation-for="ContentNote" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="ImageFile" class="form-label"></label>
+        <input asp-for="ImageFile" type="file" accept="image/*" class="form-control" />
+        <span asp-validation-for="ImageFile" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="ImageUrl" class="form-label"></label>
+        <input asp-for="ImageUrl" class="form-control" placeholder="/images/products/... hoặc https://..." />
+        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+    </div>
+</div>
+
+@if (Model.ExistingImages.Count > 0)
+{
+    <div class="mb-3">
+        <div class="form-text mb-2">Ảnh ghi chú đã lưu — chọn ảnh cần xóa:</div>
+        <div class="row g-2">
+            @foreach (var image in Model.ExistingImages)
+            {
+                if (!image.IsContentImage) { continue; }
+                <div class="col-6 col-sm-4 col-md-3">
+                    <label class="border rounded p-2 d-block h-100">
+                        <img src="@image.Url" alt="Ảnh sản phẩm" class="w-100 rounded mb-2" style="height:100px;object-fit:cover" />
+                        <span class="small"><input type="checkbox" name="DeleteImageIds" value="@image.Id" /> Xóa ảnh @(image.IsContentImage ? "ghi chú" : "chính")</span>
+                    </label>
+                </div>
+            }
+        </div>
+    </div>
+}

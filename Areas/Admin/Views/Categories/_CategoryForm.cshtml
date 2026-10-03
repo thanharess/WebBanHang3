@@ -1,0 +1,32 @@
+@model CategoryFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="mb-3">
+    <label asp-for="Name" class="form-label"></label>
+    <input asp-for="Name" class="form-control" />
+    <span asp-validation-for="Name" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Description" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="ImageUrl" class="form-label"></label>
+    <input asp-for="ImageUrl" class="form-control" placeholder="/images/spec-club.svg" />
+    <span asp-validation-for="ImageUrl" class="text-danger"></span>
+    <div class="form-text">Đặt file trong <code>wwwroot/images/</code> rồi ghi đường dẫn, ví dụ <code>/images/categories/gay-golf.jpg</code>.</div>
+    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+    {
+        <img src="@Model.ImageUrl" alt="Xem trước" class="mt-2 rounded border" style="max-height:80px;object-fit:contain;background:#f5f5f5" />
+    }
+</div>
+
+<div class="form-check mb-3">
+    <input asp-for="IsActive" class="form-check-input" />
+    <label asp-for="IsActive" class="form-check-label"></label>
+    <div class="form-text">Bỏ chọn để ẩn danh mục khỏi menu và bộ lọc của khách.</div>
+</div>

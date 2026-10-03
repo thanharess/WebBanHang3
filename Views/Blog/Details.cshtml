@@ -1,0 +1,33 @@
+@model WebBanHang.Controllers.BlogPost
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container my-4 product-detail-page">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Blog" asp-action="Index">Blog</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <article class="blog-post">
+        <span class="text-uppercase small fw-bold text-muted letter-spacing">CH&amp;T GOLF JOURNAL</span>
+        <h1 class="product-detail-title mt-2">@Model.Title</h1>
+        <p class="text-muted mb-4">@Model.PublishedAt.ToString("dd/MM/yyyy") · @Model.Author</p>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-5">
+                <img src="@Model.ImageUrl" class="img-fluid rounded w-100" style="aspect-ratio:1/1;object-fit:contain;background:#f2f2f2" alt="@Model.Title" />
+            </div>
+            <div class="col-md-7">
+                <div class="product-content-note-body blog-content">
+                    @Html.Raw(Model.Content)
+                </div>
+            </div>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">← Về danh sách blog</a>
+    </article>
+</div>

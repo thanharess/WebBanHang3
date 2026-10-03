@@ -1,0 +1,35 @@
+@model List<ChatMessage>
+@{
+    ViewData["Title"] = "Chat — " + (ViewData["GuestName"] ?? "Khách");
+    var sessionKey = ViewData["SessionKey"] as string;
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Quản lý chat</a></li>
+        <li class="breadcrumb-item active">@ViewData["GuestName"]</li>
+    </ol>
+</nav>
+<div class="card shadow-sm">
+    <div class="card-header fw-bold d-flex justify-content-between">
+        <span>@ViewData["GuestName"]</span>
+        <span class="small text-muted font-monospace">@sessionKey</span>
+    </div>
+    <div class="card-body admin-chat-box" id="adminChatBox">
+        @foreach (var m in Model)
+        {
+            <div class="admin-chat-row @(m.IsFromStaff ? "staff" : "guest")">
+                <div class="admin-chat-bubble @(m.IsFromStaff ? "staff" : "guest")">
+                    <div>@m.Content</div>
+                    <span class="meta">@(m.IsFromStaff ? "Bạn" : "Khách") · @m.CreatedAt.ToString("dd/MM HH:mm")</span>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="card-footer">
+        <form asp-action="Reply" method="post" class="d-flex gap-2">
+            <input type="hidden" name="sessionKey" value="@sessionKey" />
+            <input name="content" class="form-control" placeholder="Nhập trả lời..." required maxlength="1000" autocomplete="off" />
+            <button type="submit" class="btn btn-primary">Gửi</button>
+        </form>
+    </div>
+</div>

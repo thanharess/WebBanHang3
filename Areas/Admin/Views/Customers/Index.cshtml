@@ -1,0 +1,53 @@
+@model IEnumerable<CustomerListItemViewModel>
+
+@{
+	ViewData["Title"] = "Khách hàng";
+	var keyword = ViewData["Keyword"] as string;
+	var isActive = ViewData["IsActive"] as bool?;
+	var sort = ViewData["Sort"] as string ?? "id";
+	var dir = ViewData["Dir"] as string ?? "desc";
+	var page = (int)(ViewData["Page"] ?? 1);
+	var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+	var totalItems = (int)(ViewData["TotalItems"] ?? 0);
+	string NextDir(string col) => sort == col && dir == "asc" ? "desc" : "asc";
+	string Icon(string col) => sort == col ? (dir == "asc" ? "↑" : "↓") : "↕";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+	<h2 class="fw-bold mb-0">👥 Khách hàng</h2>
+	<a class="btn btn-success" asp-action="ExportExcel" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="@sort" asp-route-dir="@dir">⬇ Excel</a>
+</div>
+
+<form method="get" asp-action="Index" class="card shadow-sm mb-3">
+	<div class="card-body row g-2 align-items-end">
+		<div class="col-md-5"><label class="form-label small mb-1">Tìm khách</label><input type="text" name="q" value="@keyword" class="form-control" placeholder="Tên, email, SĐT, địa chỉ..." /></div>
+		<div class="col-md-3"><label class="form-label small mb-1">Trạng thái</label><select name="isActive" class="form-select"><option value="">Tất cả</option><option value="true" selected="@(isActive == true)">Hoạt động</option><option value="false" selected="@(isActive == false)">Khoá</option></select></div>
+		<div class="col-auto"><button type="submit" class="btn btn-primary px-4">Lọc</button> <a asp-action="Index" class="btn btn-outline-secondary">Xoá lọc</a></div>
+	</div>
+</form>
+
+<p class="text-muted">Tìm thấy <strong>@totalItems</strong> khách hàng.</p>
+<div class="table-responsive card shadow-sm">
+	<table class="table table-hover align-middle mb-0">
+		<thead><tr>
+			<th><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="name" asp-route-dir="@NextDir("name")">Họ tên <span class="sort-indicator">@Icon("name")</span></a></th>
+			<th><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="email" asp-route-dir="@NextDir("email")">Email <span class="sort-indicator">@Icon("email")</span></a></th>
+			<th><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="phone" asp-route-dir="@NextDir("phone")">SĐT <span class="sort-indicator">@Icon("phone")</span></a></th>
+			<th><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="address" asp-route-dir="@NextDir("address")">Địa chỉ <span class="sort-indicator">@Icon("address")</span></a></th>
+			<th class="text-center"><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="orders" asp-route-dir="@NextDir("orders")">Đơn <span class="sort-indicator">@Icon("orders")</span></a></th>
+			<th class="text-end"><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="spent" asp-route-dir="@NextDir("spent")">Tổng chi <span class="sort-indicator">@Icon("spent")</span></a></th>
+			<th><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="active" asp-route-dir="@NextDir("active")">Trạng thái <span class="sort-indicator">@Icon("active")</span></a></th>
+			<th><a class="table-sort" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="created" asp-route-dir="@NextDir("created")">Ngày tạo <span class="sort-indicator">@Icon("created")</span></a></th>
+		</tr></thead>
+		<tbody>
+		@foreach (var u in Model)
+		{
+			<tr><td class="fw-bold"><a asp-action="Details" asp-route-id="@u.Id" class="text-decoration-none">@u.FullName</a></td><td>@u.Email</td><td>@u.PhoneNumber</td><td class="text-muted small">@u.Address</td><td class="text-center">@u.OrderCount</td><td class="text-end">@u.TotalSpent.ToString("N0") đ</td><td>@(u.IsActive ? "Hoạt động" : "Khoá")</td><td class="small text-muted">@u.CreatedAt.ToString("dd/MM/yyyy")</td></tr>
+		}
+		</tbody>
+	</table>
+</div>
+@if (totalPages > 1)
+{
+	<nav class="mt-3"><ul class="pagination">@for (var i = 1; i <= totalPages; i++) { <li class="page-item @(i == page ? "active" : null)"><a class="page-link" asp-action="Index" asp-route-q="@keyword" asp-route-isActive="@isActive" asp-route-sort="@sort" asp-route-dir="@dir" asp-route-page="@i">@i</a></li> }</ul></nav>
+}

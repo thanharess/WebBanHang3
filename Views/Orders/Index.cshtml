@@ -1,0 +1,115 @@
+@model List<Order>
+
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <h2 class="fw-bold mb-0">🧾 Đơn hàng của tôi</h2>
+        <a asp-controller="Products" asp-action="Index" class="btn btn-outline-secondary btn-sm">Tiếp tục mua sắm</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <p class="text-muted mb-3">Bạn chưa có đơn hàng nào.</p>
+                <a asp-controller="Products" asp-action="Index" class="btn btn-primary">← Mua sắm ngay</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var order in Model)
+            {
+                var payment = order.Payments.FirstOrDefault();
+                var canCancel = order.Status is OrderStatus.Pending or OrderStatus.Confirmed;
+                var canReorder = order.Status == OrderStatus.Cancelled;
+                <div class="col-12">
+                    <div class="card order-card shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start mb-2">
+                                <div>
+                                    <div class="text-muted small">Mã đơn</div>
+                                    <div class="fw-bold fs-5">@order.OrderCode</div>
+                                    <div class="text-muted small">@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge @order.Status.ToBadgeClass() px-3 py-2">@order.Status.ToVietnamese()</span>
+                                    <div class="fw-bold mt-2">@order.TotalAmount.ToString("N0") đ</div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-3 small text-muted mb-3">
+                                @if (payment != null)
+                                {
+                                    <span>💳 @payment.Method.ToVietnamese() · @payment.Status.ToVietnamese()</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(order.ShippingAddress))
+                                {
+                                    <span>📍 @order.ShippingAddress</span>
+                                }
+                            </div>
+
+                            <div class="order-quick-items collapse" id="orderItems-@order.Id">
+                                <ul class="list-group list-group-flush mb-3 border rounded">
+                                    @foreach (var d in order.OrderDetails)
+                                    {
+                                        <li class="list-group-item d-flex align-items-center gap-2 py-2">
+                                            <img src="@(d.Product?.ImageUrl ?? "/images/product-placeholder.svg")" alt=""
+                                                 style="width:40px;height:40px;object-fit:contain;background:#f5f5f5;border-radius:6px" class="border" />
+                                            <div class="flex-grow-1 small">
+                                                <div class="fw-semibold">@(d.Product?.Name ?? "Sản phẩm")</div>
+                                                <div class="text-muted">× @d.Quantity · @d.LineTotal.ToString("N0") đ</div>
+                                            </div>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary order-toggle-btn"
+                                        data-bs-toggle="collapse" data-bs-target="#orderItems-@order.Id"
+                                        aria-expanded="false" aria-controls="orderItems-@order.Id">
+                                    <span class="toggle-label">▼ Xem sản phẩm</span>
+                                </button>
+                                <a class="btn btn-sm btn-primary" asp-action="Details" asp-route-id="@order.Id">Chi tiết</a>
+                                @if (canCancel)
+                                {
+                                    <form asp-action="Cancel" asp-route-id="@order.Id" method="post" class="d-inline"
+                                          onsubmit="return confirm('Huỷ đơn hàng này?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Huỷ đơn</button>
+                                    </form>
+                                }
+                                @if (canReorder)
+                                {
+                                    <form asp-action="Reorder" asp-route-id="@order.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-success">Đặt lại đơn</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+document.querySelectorAll('.order-toggle-btn').forEach(function (btn) {
+    var target = document.querySelector(btn.getAttribute('data-bs-target'));
+    if (!target) return;
+    target.addEventListener('shown.bs.collapse', function () {
+        btn.querySelector('.toggle-label').textContent = '▲ Thu gọn';
+    });
+    target.addEventListener('hidden.bs.collapse', function () {
+        btn.querySelector('.toggle-label').textContent = '▼ Xem sản phẩm';
+    });
+});
+</script>
+}

@@ -1,0 +1,49 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Quản lý chat";
+    var presence = ViewData["StaffPresence"] as IEnumerable<WebBanHang.Areas.Admin.ViewModels.StaffPresenceViewModel> ?? Enumerable.Empty<WebBanHang.Areas.Admin.ViewModels.StaffPresenceViewModel>();
+}
+<h2 class="fw-bold mb-3">💬 Quản lý chat khách hàng</h2>
+<p class="text-muted">Phiên chat theo từng khách (cookie). Nhân viên và Admin đều trả lời được.</p>
+<div class="card shadow-sm mb-4">
+    <div class="card-header fw-bold">Trạng thái đội ngũ hỗ trợ</div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-3">
+            @foreach (var member in presence)
+            {
+                <div class="border rounded px-3 py-2 d-flex align-items-center gap-2">
+                    <span class="rounded-circle @(member.IsOnline ? "bg-success" : "bg-secondary")" style="width:10px;height:10px"></span>
+                    <span>@member.FullName</span>
+                    <span class="small text-muted">@(member.Role == WebBanHang.Models.UserRole.Admin ? "Admin" : "Nhân viên")</span>
+                    <span class="small @(member.IsOnline ? "text-success" : "text-muted")">@(member.IsOnline ? "Online" : "Offline")</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Chưa có cuộc chat nào.</div>
+}
+else
+{
+    <div class="list-group shadow-sm">
+    @foreach (var t in Model)
+    {
+        <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-start"
+           asp-action="Thread" asp-route-sessionKey="@t.SessionKey">
+            <div>
+                <div class="fw-bold">@t.GuestName</div>
+                <div class="small text-muted text-truncate" style="max-width:28rem">@t.LastMessage</div>
+            </div>
+            <div class="text-end">
+                <div class="small text-muted">@(((DateTime)t.LastAt).ToString("dd/MM HH:mm"))</div>
+                @if ((int)t.Unread > 0)
+                {
+                    <span class="badge bg-danger">@t.Unread mới</span>
+                }
+            </div>
+        </a>
+    }
+    </div>
+}

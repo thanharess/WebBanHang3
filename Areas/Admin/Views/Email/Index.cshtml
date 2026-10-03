@@ -1,0 +1,212 @@
+@using WebBanHang.Areas.Admin.Controllers
+@model SendEmailViewModel
+@{
+    ViewData["Title"] = "Gửi email";
+    var configured = ViewData["EmailConfigured"] as bool? == true;
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h2 class="fw-bold mb-0">✉️ Gửi email khách hàng</h2>
+</div>
+
+@if (!configured)
+{
+    <div class="alert alert-warning">
+        <strong>Chưa có mật khẩu ứng dụng Gmail.</strong> Tài khoản gửi: <code>chtgolfvn@gmail.com</code>.
+        Mở <code>appsettings.json</code> → <code>Email:Password</code> điền <em>mật khẩu ứng dụng</em>
+        (Google Tài khoản → Bảo mật → Xác minh 2 bước → Mật khẩu ứng dụng).
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header fw-bold">Mẫu email</div>
+            <div class="list-group list-group-flush">
+                @foreach (var t in EmailController.Templates)
+                {
+                    <a class="list-group-item list-group-item-action @(Model.TemplateKey == t.Key ? "active" : "")"
+                       asp-action="ApplyTemplate"
+                       asp-route-key="@t.Key"
+                       asp-route-orderId="@Model.OrderId"
+                       asp-route-customerId="@Model.CustomerId">
+                        @t.Value.Name
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header fw-bold">Chọn khách hàng</div>
+            <div class="card-body">
+                <label class="form-label small">Lọc theo tên</label>
+                <select id="customerPickName" class="form-select form-select-sm mb-2">
+                    <option value="">— Chọn theo tên —</option>
+                    @foreach (var c in Model.Customers.OrderBy(x => x.FullName))
+                    {
+                        if (Model.CustomerId == c.Id)
+                        {
+                            <option value="@c.Id" data-email="@c.Email" selected>@c.LabelByName</option>
+                        }
+                        else
+                        {
+                            <option value="@c.Id" data-email="@c.Email">@c.LabelByName</option>
+                        }
+                    }
+                </select>
+                <label class="form-label small">Lọc theo email</label>
+                <select id="customerPickEmail" class="form-select form-select-sm">
+                    <option value="">— Chọn theo email —</option>
+                    @foreach (var c in Model.Customers.OrderBy(x => x.Email))
+                    {
+                        if (Model.CustomerId == c.Id)
+                        {
+                            <option value="@c.Id" data-email="@c.Email" selected>@c.LabelByEmail</option>
+                        }
+                        else
+                        {
+                            <option value="@c.Id" data-email="@c.Email">@c.LabelByEmail</option>
+                        }
+                    }
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2 w-100" id="btnLoadCustomer">Áp dụng khách</button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header fw-bold">Chọn đơn hàng</div>
+            <div class="card-body">
+                <label class="form-label small">Gần đây</label>
+                <select id="orderPick" class="form-select form-select-sm">
+                    <option value="">— Chọn đơn để chèn thẻ —</option>
+                    @foreach (var o in Model.RecentOrders)
+                    {
+                        if (Model.OrderId == o.Id)
+                        {
+                            <option value="@o.Id" selected>@o.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@o.Id">@o.Label</option>
+                        }
+                    }
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-2 w-100" id="btnLoadOrder">Áp dụng đơn</button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold">Thẻ chèn nhanh</div>
+            <div class="card-body d-flex flex-wrap gap-1">
+                @foreach (var tag in new[] { "MaDon", "TenKhach", "Email", "SDT", "DiaChi", "TongTien", "TrangThai", "NgayDat", "GhiChu" })
+                {
+                    <button type="button" class="btn btn-sm btn-outline-secondary tag-btn" data-tag="{{@tag}}">@tag</button>
+                }
+            </div>
+            <div class="card-footer small text-muted">
+                Giá trị hiện tại:<br />
+                @foreach (var kv in Model.TagValues.Where(x => !string.IsNullOrEmpty(x.Value)))
+                {
+                    <div><code>@kv.Key</code> = @kv.Value</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="Index" method="post">
+                    <input type="hidden" asp-for="OrderId" />
+                    <input type="hidden" asp-for="CustomerId" />
+                    <input type="hidden" asp-for="TemplateKey" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Gửi tới (chọn khách hoặc nhập email)</label>
+                        <select id="toEmailSelect" class="form-select mb-2">
+                            <option value="">— Chọn email khách hàng —</option>
+                            @foreach (var c in Model.Customers.OrderBy(x => x.Email))
+                            {
+                                if (Model.ToEmail == c.Email)
+                                {
+                                    <option value="@c.Email" data-id="@c.Id" selected>@c.Email — @c.FullName</option>
+                                }
+                                else
+                                {
+                                    <option value="@c.Email" data-id="@c.Id">@c.Email — @c.FullName</option>
+                                }
+                            }
+                        </select>
+                        <input asp-for="ToEmail" class="form-control" id="ToEmail" placeholder="email@example.com" />
+                        <span asp-validation-for="ToEmail" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Subject" class="form-label"></label>
+                        <input asp-for="Subject" class="form-control" id="emailSubject" />
+                        <span asp-validation-for="Subject" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Body" class="form-label"></label>
+                        <textarea asp-for="Body" class="form-control font-monospace" id="emailBody" rows="14"></textarea>
+                        <span asp-validation-for="Body" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" @(configured ? null : "disabled")>
+                        Gửi qua Gmail
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('btnLoadOrder')?.addEventListener('click', function () {
+    var id = document.getElementById('orderPick').value;
+    if (!id) return;
+    var key = '@Model.TemplateKey';
+    location.href = '@Url.Action("ApplyTemplate")?key=' + encodeURIComponent(key) + '&orderId=' + id;
+});
+document.getElementById('btnLoadCustomer')?.addEventListener('click', function () {
+    var a = document.getElementById('customerPickName');
+    var b = document.getElementById('customerPickEmail');
+    var id = '';
+    if (a && a.value) id = a.value;
+    else if (b && b.value) id = b.value;
+    if (!id) { alert('Chọn khách hàng trong list.'); return; }
+    var key = '@Model.TemplateKey';
+    location.href = '@Url.Action("ApplyTemplate")?key=' + encodeURIComponent(key) + '&customerId=' + encodeURIComponent(id);
+});
+// sync selects
+['customerPickName','customerPickEmail'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('change', function () {
+        var other = document.getElementById(id === 'customerPickName' ? 'customerPickEmail' : 'customerPickName');
+        if (other) other.value = el.value;
+        var opt = el.options[el.selectedIndex];
+        var email = opt && opt.getAttribute('data-email');
+        var to = document.querySelector('input[name="ToEmail"]');
+        if (to && email) to.value = email;
+    });
+});
+var toSel = document.getElementById('toEmailSelect');
+var toInput = document.getElementById('ToEmail');
+if (toSel && toInput) {
+    toSel.addEventListener('change', function () {
+        if (toSel.value) toInput.value = toSel.value;
+    });
+}
+document.querySelectorAll('.tag-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        var ta = document.getElementById('emailBody');
+        var tag = btn.getAttribute('data-tag');
+        var start = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.slice(0, start) + tag + ta.value.slice(end);
+        ta.focus();
+        ta.selectionStart = ta.selectionEnd = start + tag.length;
+    });
+});
+</script>
+}

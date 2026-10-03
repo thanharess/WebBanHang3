@@ -1,0 +1,133 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string NavClass(string controller) =>
+        string.Equals(controller, currentController, StringComparison.OrdinalIgnoreCase)
+            ? "active"
+            : "";
+    var pageTitle = ViewData["Title"]?.ToString() ?? "Quản trị";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@pageTitle — CH&amp;T GOLF Admin</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+    <div class="admin-shell" id="adminShell">
+        <aside class="admin-sidebar" id="adminSidebar">
+            <a class="admin-brand" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                <span class="admin-brand-mark">CT</span>
+                <span class="admin-brand-text">
+                    <strong>CH&amp;T GOLF</strong>
+                    <small>Bảng quản trị</small>
+                </span>
+            </a>
+
+            <nav class="admin-nav">
+                <div class="admin-nav-label">Tổng quan</div>
+                <a class="@NavClass("Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                    <span class="nav-ico">📊</span> Tổng quan
+                </a>
+
+                <div class="admin-nav-label">Sản phẩm</div>
+                <a class="@NavClass("Products")" asp-area="Admin" asp-controller="Products" asp-action="Index">
+                    <span class="nav-ico">📦</span> Sản phẩm
+                </a>
+                <a class="@NavClass("Categories")" asp-area="Admin" asp-controller="Categories" asp-action="Index">
+                    <span class="nav-ico">🗂️</span> Danh mục
+                </a>
+
+                <div class="admin-nav-label">Đơn &amp; khách</div>
+                <a class="@NavClass("Orders")" asp-area="Admin" asp-controller="Orders" asp-action="Index">
+                    <span class="nav-ico">🧾</span> Đơn hàng
+                </a>
+                <a class="@NavClass("Customers")" asp-area="Admin" asp-controller="Customers" asp-action="Index">
+                    <span class="nav-ico">👥</span> Khách hàng
+                </a>
+
+                <div class="admin-nav-label">Tư vấn</div>
+                <a class="@NavClass("Chat")" asp-area="Admin" asp-controller="Chat" asp-action="Index">
+                    <span class="nav-ico">💬</span> Quản lý chat
+                </a>
+                <a class="@NavClass("Email")" asp-area="Admin" asp-controller="Email" asp-action="Index">
+                    <span class="nav-ico">✉️</span> Gửi email
+                </a>
+
+                <div class="admin-nav-label">Báo cáo</div>
+                <a class="@NavClass("Statistics")" asp-area="Admin" asp-controller="Statistics" asp-action="Index">
+                    <span class="nav-ico">📈</span> Thống kê
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-foot">
+                CH&amp;T GOLF · Admin
+            </div>
+        </aside>
+
+        <div class="admin-main">
+            <header class="admin-topbar">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="admin-menu-toggle" id="adminMenuToggle" aria-label="Mở menu">☰ Menu</button>
+                    <h1 class="admin-topbar-title">@pageTitle</h1>
+                </div>
+                <div class="admin-topbar-actions">
+                    <a class="btn btn-sm btn-outline-secondary" asp-area="" asp-controller="Home" asp-action="Index" target="_blank">↗ Cửa hàng</a>
+                    <span class="admin-user-chip">👤 @User.Identity?.Name</span>
+                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Đăng xuất</button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                @if (TempData["Success"] is string successMessage)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        @successMessage
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                    </div>
+                }
+                @if (TempData["Error"] is string errorMessage)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @errorMessage
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Đóng"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </main>
+        </div>
+        <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            var shell = document.getElementById('adminShell');
+            var toggle = document.getElementById('adminMenuToggle');
+            var backdrop = document.getElementById('adminSidebarBackdrop');
+            function close() { shell.classList.remove('sidebar-open'); }
+            function open() { shell.classList.add('sidebar-open'); }
+            if (toggle) toggle.addEventListener('click', function () {
+                shell.classList.toggle('sidebar-open');
+            });
+            if (backdrop) backdrop.addEventListener('click', close);
+        })();
+
+        (function () {
+            var heartbeatUrl = '@Url.Action("Heartbeat", "Chat", new { area = "Admin" })';
+            function heartbeat() { fetch(heartbeatUrl, { credentials: 'same-origin' }); }
+            heartbeat();
+            window.setInterval(heartbeat, 30000);
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

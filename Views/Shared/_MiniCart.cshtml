@@ -1,0 +1,51 @@
+@model List<WebBanHang.Models.CartItem>
+@{
+    Layout = null;
+}
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="mini-cart-empty">Giỏ hàng đang trống.<br /><small>Hãy chọn sản phẩm bạn yêu thích.</small></div>
+}
+else
+{
+    <div class="mini-cart-items">
+        @foreach (var item in Model)
+        {
+            <div class="mini-cart-item" data-product-id="@item.ProductId">
+                <img src="@item.ImageUrl" alt="@item.ProductName" />
+                <div class="mini-cart-info">
+                    <div class="mini-cart-name">@item.ProductName</div>
+                    <div class="mini-cart-price">
+                        Giá: <span class="mini-cart-item-price">@item.Price.ToString("N0")</span> đ
+                    </div>
+                </div>
+
+                <div class="mini-cart-controls">
+                    <form asp-controller="Cart" asp-action="UpdateQuantity" method="post" class="mini-cart-update-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@item.ProductId" />
+                        <button type="button" class="btn mini-cart-dec" title="Giảm">−</button>
+                        <input type="number" name="quantity" value="@item.Quantity" min="1" step="1"
+                               class="mini-cart-quantity-input mini-cart-qty-display" />
+                        <button type="button" class="btn mini-cart-inc" title="Tăng">+</button>
+                    </form>
+                    <form asp-controller="Cart" asp-action="Remove" method="post" class="mini-cart-remove-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@item.ProductId" />
+                        <button type="button" class="mini-cart-remove" title="Xóa sản phẩm">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<div class="mini-cart-total">
+    <span>Tạm tính</span>
+    <strong class="mini-cart-total-amount">@((Model?.Sum(i => i.TotalPrice) ?? 0).ToString("N0")) đ</strong>
+</div>
+<div class="mini-cart-actions">
+    <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-success">Xem giỏ hàng</a>
+    <a asp-controller="Checkout" asp-action="Index" class="btn btn-success">Thanh toán</a>
+</div>

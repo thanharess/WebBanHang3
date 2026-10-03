@@ -1,0 +1,125 @@
+@model IEnumerable<WebBanHang.Models.Product>
+@{
+    ViewData["Title"] = "Trang chủ - Cửa hàng trực tuyến";
+    var categories = Model
+        .Where(p => p.Category != null)
+        .Select(p => p.Category!)
+        .GroupBy(c => c.Id)
+        .Select(g => g.First())
+        .OrderBy(c => c.Name)
+        .ToList();
+}
+
+<div class="container home-page home-page-wide">
+    <div id="shopBanners" class="carousel slide hero-carousel" data-bs-ride="carousel">
+        <div class="carousel-inner rounded-3 overflow-hidden">
+            <div class="carousel-item active">
+                <section class="shop-banner shop-banner-primary">
+                    <div>
+                        <span class="banner-kicker">CH&amp;T GOLF / NEW SEASON</span>
+                        <h1>Chọn chuẩn dụng cụ.<br />Tự tin ra sân.</h1>
+                        <p>Những lựa chọn thiết yếu cho vòng golf trọn vẹn.</p>
+                        <a href="#danh-muc-san-pham" class="btn btn-light btn-lg">Khám phá ngay <span>→</span></a>
+                    </div>
+                </section>
+            </div>
+            <div class="carousel-item">
+                <section class="shop-banner shop-banner-dark">
+                    <div>
+                        <span class="banner-kicker">GOLF ESSENTIALS</span>
+                        <h1>Trang bị gọn gàng,<br />chơi hết mình.</h1>
+                        <p>Túi, găng, giày và phụ kiện tiện dụng cho mọi cuộc hẹn trên sân.</p>
+                        <a asp-controller="Products" asp-action="Index" class="btn btn-light btn-lg">Xem bộ sưu tập <span>→</span></a>
+                    </div>
+                </section>
+            </div>
+            <div class="carousel-item">
+                <section class="shop-banner shop-banner-green">
+                    <div>
+                        <span class="banner-kicker">GIÁ TỐT HÔM NAY</span>
+                        <h1>Sẵn sàng cho<br />cú swing tiếp theo.</h1>
+                        <p>Nhiều sản phẩm mẫu ưu đãi để bạn chọn trang bị phù hợp.</p>
+                        <a asp-controller="Products" asp-action="Index" class="btn btn-light btn-lg">Mua sắm ngay <span>→</span></a>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#shopBanners" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span><span class="visually-hidden">Trước</span></button>
+        <button class="carousel-control-next" type="button" data-bs-target="#shopBanners" data-bs-slide="next"><span class="carousel-control-next-icon"></span><span class="visually-hidden">Sau</span></button>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Cửa hàng chưa có sản phẩm nào. Vui lòng quay lại sau.</div>
+    }
+    else
+    {
+        <div id="danh-muc-san-pham" class="home-category-collections">
+            @foreach (var category in categories)
+            {
+                var products = Model.Where(p => p.CategoryId == category.Id).OrderByDescending(p => p.Id).Take(4).ToList();
+                <section class="category-product-section">
+                    <a asp-controller="Products" asp-action="Index" asp-route-categoryId="@category.Id" class="category-collection-banner">
+                        <div>
+                            <span>CH&amp;T GOLF COLLECTION</span>
+                            <h2>@category.Name</h2>
+                            <p>@category.Description</p>
+                            <strong>Mua ngay <b>→</b></strong>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(category.ImageUrl))
+                        {
+                            <img class="category-collection-img" src="@category.ImageUrl" alt="@category.Name" />
+                        }
+                        else
+                        {
+                            <span class="category-collection-number">0@(category.Id % 9 + 1)</span>
+                        }
+                    </a>
+
+                    <div class="category-products-heading">
+                        <h3>Sản phẩm @category.Name</h3>
+                        <a asp-controller="Products" asp-action="Index" asp-route-categoryId="@category.Id">Xem tất cả <span>→</span></a>
+                    </div>
+
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-3 product-grid">
+                        @foreach (var item in products)
+                        {
+                            var hasDiscount = item.DiscountPrice.HasValue && item.DiscountPrice.Value < item.Price;
+                            <div class="col" id="product-@item.Id">
+                                <div class="card product-card h-100">
+                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@item.Id" class="product-image-link">
+                                        <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name" />
+                                    </a>
+
+                                    <div class="card-body d-flex flex-column">
+                                        <a asp-controller="Products" asp-action="Details" asp-route-id="@item.Id" class="product-name-link"><h5 class="card-title">@item.Name</h5></a>
+                                        <p class="card-text text-muted small mb-1">@item.Category?.Name</p>
+                                        <p class="price @(hasDiscount ? "sale" : "") mb-1">@((item.DiscountPrice ?? item.Price).ToString("N0")) đ @if (hasDiscount) { <span class="price-old">@item.Price.ToString("N0") đ</span> }</p>
+                                        <p class="card-text text-muted small mb-3">Tồn kho: @item.StockQuantity</p>
+
+                                        <a asp-controller="Products" asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary mb-2">Xem chi tiết</a>
+
+                                        @if (item.StockQuantity > 0)
+                                        {
+                                            <form asp-controller="Cart" asp-action="Add" method="post" class="mt-auto" data-ajax-add="true">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="productId" value="@item.Id" />
+                                                <input type="hidden" name="quantity" value="1" />
+                                                <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Home")" />
+                                                <button type="submit" class="btn btn-primary w-100 btn-sm">🛒 Thêm vào giỏ</button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-secondary w-100 mt-auto" disabled>Hết hàng</button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+    }
+</div>

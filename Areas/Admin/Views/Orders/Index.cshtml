@@ -1,0 +1,116 @@
+@model OrderListViewModel
+
+@{
+	ViewData["Title"] = "Quản lý đơn hàng";
+	var sort = Model.Sort;
+	var dir = Model.Direction;
+	string NextDir(string column) => sort == column && dir == "asc" ? "desc" : "asc";
+	string Icon(string column) => sort == column ? (dir == "asc" ? "↑" : "↓") : "↕";
+}
+
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+	<h2 class="fw-bold mb-0">🧾 Quản lý đơn hàng</h2>
+	<a class="btn btn-success" asp-action="ExportExcel"
+	   asp-route-status="@Model.Status" asp-route-q="@Model.Keyword"
+	   asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+	   asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax"
+	   asp-route-sort="@sort" asp-route-dir="@dir">⬇ Excel</a>
+</div>
+
+<ul class="nav nav-pills flex-wrap gap-2 mb-3">
+	<li class="nav-item">
+		<a class="nav-link @(Model.Status == null ? "active" : "bg-white border")" asp-action="Index"
+		   asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+		   asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax">
+			Tất cả (@Model.AllCount)
+		</a>
+	</li>
+	@foreach (var status in OrderListViewModel.AllStatuses)
+	{
+		<li class="nav-item">
+			<a class="nav-link @(Model.Status == status ? "active" : "bg-white border")" asp-action="Index"
+			   asp-route-status="@status" asp-route-q="@Model.Keyword"
+			   asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+			   asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax">
+				@status.ToVietnamese() (@Model.CountOf(status))
+			</a>
+		</li>
+	}
+</ul>
+
+<form asp-action="Index" method="get" class="card shadow-sm mb-3">
+	<div class="card-body row g-3 align-items-end">
+		<input type="hidden" name="status" value="@Model.Status" />
+		<div class="col-12 col-lg-4">
+			<label class="form-label small mb-1">Tìm đơn / khách / SĐT</label>
+			<input type="text" name="q" value="@Model.Keyword" class="form-control" placeholder="Mã đơn, tên khách..." />
+		</div>
+		<div class="col-6 col-lg-2">
+			<label class="form-label small mb-1">Từ ngày</label>
+			<input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control" />
+		</div>
+		<div class="col-6 col-lg-2">
+			<label class="form-label small mb-1">Đến ngày</label>
+			<input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control" />
+		</div>
+		<div class="col-6 col-lg-2">
+			<label class="form-label small mb-1">Tổng tiền từ</label>
+			<input type="number" name="totalMin" value="@Model.TotalMin" min="0" class="form-control" />
+		</div>
+		<div class="col-6 col-lg-2">
+			<label class="form-label small mb-1">Tổng tiền đến</label>
+			<input type="number" name="totalMax" value="@Model.TotalMax" min="0" class="form-control" />
+		</div>
+		<div class="col-12 d-flex gap-2">
+			<button type="submit" class="btn btn-primary px-4">Lọc</button>
+			<a asp-action="Index" class="btn btn-outline-secondary">Xoá lọc</a>
+		</div>
+	</div>
+</form>
+
+<p class="text-muted">Tìm thấy <strong>@Model.TotalItems</strong> đơn hàng.</p>
+
+<div class="table-responsive">
+	<table class="table table-hover align-middle bg-white shadow-sm">
+		<thead class="table-light">
+			<tr>
+				<th><a class="table-sort" asp-action="Index" asp-route-status="@Model.Status" asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo" asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax" asp-route-sort="code" asp-route-dir="@NextDir("code")">Mã đơn <span class="sort-indicator">@Icon("code")</span></a></th>
+				<th><a class="table-sort" asp-action="Index" asp-route-status="@Model.Status" asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo" asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax" asp-route-sort="customer" asp-route-dir="@NextDir("customer")">Khách hàng <span class="sort-indicator">@Icon("customer")</span></a></th>
+				<th><a class="table-sort" asp-action="Index" asp-route-status="@Model.Status" asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo" asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax" asp-route-sort="phone" asp-route-dir="@NextDir("phone")">Điện thoại <span class="sort-indicator">@Icon("phone")</span></a></th>
+				<th><a class="table-sort" asp-action="Index" asp-route-status="@Model.Status" asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo" asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax" asp-route-sort="date" asp-route-dir="@NextDir("date")">Ngày đặt <span class="sort-indicator">@Icon("date")</span></a></th>
+				<th class="text-end"><a class="table-sort" asp-action="Index" asp-route-status="@Model.Status" asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo" asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax" asp-route-sort="total" asp-route-dir="@NextDir("total")">Tổng tiền <span class="sort-indicator">@Icon("total")</span></a></th>
+				<th class="text-center">Thanh toán</th>
+				<th class="text-center"><a class="table-sort" asp-action="Index" asp-route-status="@Model.Status" asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo" asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax" asp-route-sort="status" asp-route-dir="@NextDir("status")">Trạng thái <span class="sort-indicator">@Icon("status")</span></a></th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+		@foreach (var order in Model.Orders)
+		{
+			var payment = order.Payments.FirstOrDefault();
+			<tr>
+				<td class="fw-bold">@order.OrderCode</td>
+				<td>@if (order.User != null) { <a asp-controller="Customers" asp-action="Details" asp-route-id="@order.User.Id">@order.User.FullName</a> } else { <span class="text-muted">—</span> }</td>
+				<td>@order.User?.PhoneNumber</td>
+				<td>@order.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+				<td class="text-end">@order.TotalAmount.ToString("N0") đ</td>
+				<td class="text-center small">@(payment?.Method.ToVietnamese() ?? "—")<br /><span class="text-muted">@(payment?.Status.ToVietnamese() ?? "")</span></td>
+				<td class="text-center"><span class="badge @order.Status.ToBadgeClass()">@order.Status.ToVietnamese()</span></td>
+				<td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@order.Id">Xem</a></td>
+			</tr>
+		}
+		</tbody>
+	</table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+	<nav class="mt-3"><ul class="pagination justify-content-center">
+		@for (var i = 1; i <= Model.TotalPages; i++)
+		{
+			<li class="page-item @(i == Model.Page ? "active" : string.Empty)"><a class="page-link" asp-action="Index"
+				asp-route-status="@Model.Status" asp-route-q="@Model.Keyword" asp-route-dateFrom="@Model.DateFrom" asp-route-dateTo="@Model.DateTo"
+				asp-route-totalMin="@Model.TotalMin" asp-route-totalMax="@Model.TotalMax" asp-route-sort="@sort" asp-route-dir="@dir" asp-route-page="@i">@i</a></li>
+		}
+	</ul></nav>
+}

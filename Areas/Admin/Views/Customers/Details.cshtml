@@ -1,0 +1,72 @@
+@model List<Order>
+@{
+    var customer = ViewData["Customer"] as User;
+    ViewData["Title"] = customer?.FullName ?? "Khách hàng";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Khách hàng</a></li>
+        <li class="breadcrumb-item active">@customer?.FullName</li>
+    </ol>
+</nav>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <h2 class="fw-bold mb-2">@customer?.FullName</h2>
+        <div class="row g-2 small">
+            <div class="col-md-4">✉️ @customer?.Email</div>
+            <div class="col-md-4">📞 @customer?.PhoneNumber</div>
+            <div class="col-md-4">📍 @customer?.Address</div>
+            <div class="col-md-4">Ngày tạo: @customer?.CreatedAt.ToString("dd/MM/yyyy")</div>
+            <div class="col-md-4">
+                @if (customer?.IsActive == true)
+                { <span class="badge bg-success">Hoạt động</span> }
+                else
+                { <span class="badge bg-secondary">Khoá</span> }
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4 class="fw-bold mb-3">Đơn hàng (@Model.Count)</h4>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">Khách chưa có đơn hàng.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã đơn</th>
+                    <th>Ngày đặt</th>
+                    <th class="text-end">Tổng tiền</th>
+                    <th>Thanh toán</th>
+                    <th>Trạng thái</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var o in Model)
+            {
+                var pay = o.Payments.FirstOrDefault();
+                <tr>
+                    <td class="fw-bold">@o.OrderCode</td>
+                    <td>@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td class="text-end">@o.TotalAmount.ToString("N0") đ</td>
+                    <td class="small">@(pay?.Method.ToVietnamese() ?? "—")<br /><span class="text-muted">@(pay?.Status.ToVietnamese() ?? "")</span></td>
+                    <td><span class="badge @o.Status.ToBadgeClass()">@o.Status.ToVietnamese()</span></td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-primary" asp-area="Admin" asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">Xem đơn</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+<a asp-action="Index" class="btn btn-outline-secondary">← Danh sách khách</a>

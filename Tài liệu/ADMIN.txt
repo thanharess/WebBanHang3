@@ -1,0 +1,27 @@
+CH&T GOLF — Tài khoản quản trị (môi trường phát triển)
+
+Email:    admin@golfking.vn
+Mật khẩu: Admin@123
+
+Đường dẫn khu quản trị:
+  /Admin/Dashboard
+  hoặc đăng nhập rồi vào menu tài khoản → Khu quản trị
+
+Lưu ý:
+- Chỉ dùng mật khẩu này khi đang phát triển / demo.
+- Khi triển khai thật hãy đổi mật khẩu ngay và không commit mật khẩu production lên repo.
+
+
+--- Nhân viên (Staff) ---
+Email:    staff@chtgolf.vn
+Mật khẩu: Staff@123
+Quyền: Chat tư vấn, quản lý Sản phẩm & Danh mục (không vào Đơn hàng / Khách / Thống kê đầy đủ trừ khi là Admin)
+
+Chat khách: nút "Chat" góc phải trang bán hàng
+Admin/Staff xem: /Admin/Chat
+
+
+--- Gmail gửi email (SMTP) ---
+Tài khoản: chtgolfvn@gmail.com
+Cần điền "Password" trong appsettings.json = Mật khẩu ứng dụng Google
+(Google Tài khoản → Bảo mật → Xác minh 2 bước → Mật khẩu ứng dụng)
